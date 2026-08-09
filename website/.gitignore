@@ -1,0 +1,7 @@
+# 依赖与构建产物
+node_modules/
+dist/
+.ssg/
+
+# pnpm store 固定在项目内（适配 HOME 只读环境）
+.pnpm-store/

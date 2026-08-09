@@ -1,113 +1,164 @@
 /*
  * X25519 测试程序
+ *
+ * 覆盖三类测试：
+ *   1. 随机密钥对 + 密钥交换（双方共享密钥相等）
+ *   2. RFC 7748 §5.2 标量乘测试向量（2 组）
+ *   3. RFC 7748 §6.1 Diffie-Hellman 测试向量（私钥 -> 公钥 -> 共享密钥）
+ *
+ * 注意：旧版教程曾引用 a0a1..bf -> e6db.. 等数据并称之为 "RFC 7748 测试向量"，
+ * 那组数据并不存在于 RFC 7748 中；本文件全部使用 RFC 7748 的真实数据。
  */
 
 #include <stdio.h>
 #include <string.h>
 #include "x25519.h"
 
-void print_bytes(const char *name, const u8 *bytes, int len) {
+static int fails = 0;
+
+static void print_bytes(const char *name, const u8 *bytes, int len) {
     printf("%s: ", name);
-    for (int i = 0; i < len; i++) {
-        printf("%02x", bytes[i]);
-    }
+    for (int i = 0; i < len; i++) printf("%02x", bytes[i]);
     printf("\n");
 }
 
-void test_key_exchange() {
+/* 检查 32 字节结果是否与期望一致 */
+static void check(const char *name, const u8 *got, const u8 *want) {
+    if (memcmp(got, want, 32) == 0) {
+        printf("  PASS  %s\n", name);
+    } else {
+        printf("  FAIL  %s\n", name);
+        print_bytes("    got ", got, 32);
+        print_bytes("    want", want, 32);
+        fails++;
+    }
+}
+
+/* 测试 1：随机密钥交换 */
+static void test_key_exchange(void) {
     u8 sk_a[32], pk_a[32];
     u8 sk_b[32], pk_b[32];
     u8 shared_a[32], shared_b[32];
-    
-    printf("=== 密钥交换测试 ===\n\n");
-    
-    // Alice 生成密钥对
-    printf("Alice 生成密钥对:\n");
+
+    printf("=== 测试 1：随机密钥交换 ===\n\n");
+
     generate_keypair(pk_a, sk_a);
-    print_bytes("  私钥", sk_a, 32);
-    print_bytes("  公钥", pk_a, 32);
-    printf("\n");
-    
-    // Bob 生成密钥对
-    printf("Bob 生成密钥对:\n");
     generate_keypair(pk_b, sk_b);
-    print_bytes("  私钥", sk_b, 32);
-    print_bytes("  公钥", pk_b, 32);
-    printf("\n");
-    
-    // 计算共享密钥
-    printf("计算共享密钥:\n");
+    print_bytes("Alice 私钥", sk_a, 32);
+    print_bytes("Alice 公钥", pk_a, 32);
+    print_bytes("Bob   私钥", sk_b, 32);
+    print_bytes("Bob   公钥", pk_b, 32);
+
     x25519(shared_a, sk_a, pk_b);
     x25519(shared_b, sk_b, pk_a);
-    
-    print_bytes("Alice 计算", shared_a, 32);
-    print_bytes("Bob 计算  ", shared_b, 32);
-    printf("\n");
-    
-    // 验证
+    print_bytes("Alice 共享密钥", shared_a, 32);
+    print_bytes("Bob   共享密钥", shared_b, 32);
+
     if (memcmp(shared_a, shared_b, 32) == 0) {
-        printf("✓ 密钥交换成功！\n");
+        printf("  PASS  共享密钥一致\n");
     } else {
-        printf("✗ 密钥交换失败！\n");
+        printf("  FAIL  共享密钥不一致\n");
+        fails++;
     }
+    printf("\n");
 }
 
-void test_rfc7748() {
-    printf("\n=== RFC 7748 测试向量 ===\n\n");
-    
-    // 测试：使用已钳位的标量
-    // 标量 2^254 的钳位形式：byte[31] = 0x40, 其余为 0
-    // 这是 clamp(0) = clamp(1) 的结果
-    u8 scalar_2_254[32] = {0};
-    scalar_2_254[31] = 0x40;
+/* 测试 2：RFC 7748 §5.2 标量乘测试向量 */
+static void test_rfc7748_vectors(void) {
+    printf("=== 测试 2：RFC 7748 §5.2 标量乘测试向量 ===\n\n");
+
+    /* 向量 1 */
+    {
+        u8 scalar[32] = {0xa5,0x46,0xe3,0x6b,0xf0,0x52,0x7c,0x9d,
+                         0x3b,0x16,0x15,0x4b,0x82,0x46,0x5e,0xdd,
+                         0x62,0x14,0x4c,0x0a,0xc1,0xfc,0x5a,0x18,
+                         0x50,0x6a,0x22,0x44,0xba,0x44,0x9a,0xc4};
+        u8 u[32] = {0xe6,0xdb,0x68,0x67,0x58,0x30,0x30,0xdb,
+                    0x35,0x94,0xc1,0xa4,0x24,0xb1,0x5f,0x7c,
+                    0x72,0x66,0x24,0xec,0x26,0xb3,0x35,0x3b,
+                    0x10,0xa9,0x03,0xa6,0xd0,0xab,0x1c,0x4c};
+        u8 want[32] = {0xc3,0xda,0x55,0x37,0x9d,0xe9,0xc6,0x90,
+                       0x8e,0x94,0xea,0x4d,0xf2,0x8d,0x08,0x4f,
+                       0x32,0xec,0xcf,0x03,0x49,0x1c,0x71,0xf7,
+                       0x54,0xb4,0x07,0x55,0x77,0xa2,0x85,0x52};
+        u8 out[32];
+        x25519(out, scalar, u);
+        check("RFC 7748 §5.2 向量 1：X25519(scalar, u)", out, want);
+    }
+
+    /* 向量 2 */
+    {
+        u8 scalar[32] = {0x4b,0x66,0xe9,0xd4,0xd1,0xb4,0x67,0x3c,
+                         0x5a,0xd2,0x26,0x91,0x95,0x7d,0x6a,0xf5,
+                         0xc1,0x1b,0x64,0x21,0xe0,0xea,0x01,0xd4,
+                         0x2c,0xa4,0x16,0x9e,0x79,0x18,0xba,0x0d};
+        u8 u[32] = {0xe5,0x21,0x0f,0x12,0x78,0x68,0x11,0xd3,
+                    0xf4,0xb7,0x95,0x9d,0x05,0x38,0xae,0x2c,
+                    0x31,0xdb,0xe7,0x10,0x6f,0xc0,0x3c,0x3e,
+                    0xfc,0x4c,0xd5,0x49,0xc7,0x15,0xa4,0x93};
+        u8 want[32] = {0x95,0xcb,0xde,0x94,0x76,0xe8,0x90,0x7d,
+                       0x7a,0xad,0xe4,0x5c,0xb4,0xb8,0x73,0xf8,
+                       0x8b,0x59,0x5a,0x68,0x79,0x9f,0xa1,0x52,
+                       0xe6,0xf8,0xf7,0x64,0x7a,0xac,0x79,0x57};
+        u8 out[32];
+        x25519(out, scalar, u);
+        check("RFC 7748 §5.2 向量 2：X25519(scalar, u)", out, want);
+    }
+    printf("\n");
+}
+
+/* 测试 3：RFC 7748 §6.1 Diffie-Hellman 测试向量 */
+static void test_rfc7748_dh(void) {
+    u8 alice_sk[32] = {0x77,0x07,0x6d,0x0a,0x73,0x18,0xa5,0x7d,
+                       0x3c,0x16,0xc1,0x72,0x51,0xb2,0x66,0x45,
+                       0xdf,0x4c,0x2f,0x87,0xeb,0xc0,0x99,0x2a,
+                       0xb1,0x77,0xfb,0xa5,0x1d,0xb9,0x2c,0x2a};
+    u8 alice_pk[32] = {0x85,0x20,0xf0,0x09,0x89,0x30,0xa7,0x54,
+                       0x74,0x8b,0x7d,0xdc,0xb4,0x3e,0xf7,0x5a,
+                       0x0d,0xbf,0x3a,0x0d,0x26,0x38,0x1a,0xf4,
+                       0xeb,0xa4,0xa9,0x8e,0xaa,0x9b,0x4e,0x6a};
+    u8 bob_sk[32] = {0x5d,0xab,0x08,0x7e,0x62,0x4a,0x8a,0x4b,
+                     0x79,0xe1,0x7f,0x8b,0x83,0x80,0x0e,0xe6,
+                     0x6f,0x3b,0xb1,0x29,0x26,0x18,0xb6,0xfd,
+                     0x1c,0x2f,0x8b,0x27,0xff,0x88,0xe0,0xeb};
+    u8 bob_pk[32] = {0xde,0x9e,0xdb,0x7d,0x7b,0x7d,0xc1,0xb4,
+                     0xd3,0x5b,0x61,0xc2,0xec,0xe4,0x35,0x37,
+                     0x3f,0x83,0x43,0xc8,0x5b,0x78,0x67,0x4d,
+                     0xad,0xfc,0x7e,0x14,0x6f,0x88,0x2b,0x4f};
+    u8 shared[32] = {0x4a,0x5d,0x9d,0x5b,0xa4,0xce,0x2d,0xe1,
+                     0x72,0x8e,0x3b,0xf4,0x80,0x35,0x0f,0x25,
+                     0xe0,0x7e,0x21,0xc9,0x47,0xd1,0x9e,0x33,
+                     0x76,0xf0,0x9b,0x3c,0x1e,0x16,0x17,0x42};
     u8 base[32] = {9};
-    u8 result[32];
-    
-    x25519(result, scalar_2_254, base);
-    printf("x25519(2^254, 9) = ");
-    for (int i = 0; i < 32; i++) printf("%02x", result[i]);
+    u8 pk[32], s1[32], s2[32];
+
+    printf("=== 测试 3：RFC 7748 §6.1 Diffie-Hellman 测试向量 ===\n\n");
+
+    x25519(pk, alice_sk, base);
+    check("Alice 私钥 -> 公钥", pk, alice_pk);
+
+    x25519(pk, bob_sk, base);
+    check("Bob 私钥 -> 公钥", pk, bob_pk);
+
+    x25519(s1, alice_sk, bob_pk);
+    check("Alice 计算的共享密钥", s1, shared);
+
+    x25519(s2, bob_sk, alice_pk);
+    check("Bob 计算的共享密钥", s2, shared);
     printf("\n");
-    
-    // 验证：连续调用应该得到相同结果
-    u8 result2[32];
-    x25519(result2, scalar_2_254, base);
-    if (memcmp(result, result2, 32) == 0) {
-        printf("✓ 确定性测试通过（相同输入产生相同输出）\n");
-    } else {
-        printf("✗ 确定性测试失败\n");
-    }
-    
-    // 测试：密钥交换的正确性
-    // A 的私钥 * (B 的私钥 * G) 应该等于 B 的私钥 * (A 的私钥 * G)
-    u8 sk_a[32] = {0x42}; // 简单的测试私钥
-    u8 sk_b[32] = {0x53}; // 简单的测试私钥
-    u8 pk_a[32], pk_b[32];
-    u8 shared_a[32], shared_b[32];
-    
-    // 生成公钥
-    x25519(pk_a, sk_a, base);
-    x25519(pk_b, sk_b, base);
-    
-    // 计算共享密钥
-    x25519(shared_a, sk_a, pk_b);
-    x25519(shared_b, sk_b, pk_a);
-    
-    printf("\n密钥交换验证:\n");
-    print_bytes("  Alice 共享密钥", shared_a, 32);
-    print_bytes("  Bob 共享密钥  ", shared_b, 32);
-    
-    if (memcmp(shared_a, shared_b, 32) == 0) {
-        printf("  ✓ 共享密钥相同\n");
-    } else {
-        printf("  ✗ 共享密钥不同\n");
-    }
 }
 
-int main() {
+int main(void) {
     printf("X25519 测试程序\n\n");
-    
+
     test_key_exchange();
-    test_rfc7748();
-    
+    test_rfc7748_vectors();
+    test_rfc7748_dh();
+
+    if (fails) {
+        printf("%d 个测试失败\n", fails);
+        return 1;
+    }
+    printf("全部测试通过\n");
     return 0;
 }

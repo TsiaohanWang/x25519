@@ -1,0 +1,66 @@
+# 构建 X25519 教程网站并部署到 GitHub Pages
+#
+# 适用场景：整个 x25519 仓库部署（website/ 为子目录）。
+#   - 在仓库 Settings → Pages → Build and deployment → Source
+#     选择 "GitHub Actions"，push 到 master 时自动构建并发布。
+#   - 访问地址 https://<user>.github.io/<repo>/（或自定义域名）。
+# 构建在 website/ 目录进行，产物位于 website/dist。
+
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+# 允许 GitHub Pages 自动部署（Actions 需要 pages: write）
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 同一时刻只允许一个部署任务；正在进行时跳过新触发
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: website
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.20.0     # 与 website/package.json 的 packageManager 一致
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: website/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: website/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

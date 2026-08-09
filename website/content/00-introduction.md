@@ -5,9 +5,13 @@ Elliptic Curve Cryptography》，从最基础的数学概念出发，一步步�
 Diffie-Hellman 密钥交换算法。教程的最终目标是让你能够**亲手写出并理解** `x25519.c`
 中的每一行代码：它为什么是这样、为什么是常数时间的、以及它与论文和 RFC 7748 的关系。
 
-与旧版相比，本版的主要改进：
+本网站由 [minimal-spec-template](https://github.com/TsiaohanWang/minimal-spec-template)
+构建：Markdown 在构建期渲染为多页静态 HTML，侧边栏导航自动派生，公式由 MathJax
+按需排版。全部源代码与可编译的 C 实现位于仓库的 `x25519-tutorial/` 目录。
 
-1. **忠实于论文的推导过程**。论文的精华在于"从原理推导出每一行代码"，而旧版教程
+## 与旧版相比的主要改进
+
+1. **忠实于论文的推导过程**。论文的精华在于"从原理推导出每一行代码"，旧版教程
    大多直接给出公式。本版补全了关键推导：直线与曲线的第三交点（第 4 章）、射影坐标
    下点加法和点倍增的公式（第 11 章）、Montgomery 阶梯的 10 次乘法优化分解
    （第 12 章）等。
@@ -28,44 +32,44 @@ Diffie-Hellman 密钥交换算法。教程的最终目标是让你能够**亲手
 
 ### 第一部分：数学基础（对应论文第 2 章与 §4.1–4.3）
 
-1. **[模运算与同余](01-modular-arithmetic.md)** —— 为什么密码学要在模运算中进行，
+1. [模运算与同余](01-modular-arithmetic.html) —— 为什么密码学要在模运算中进行，
    `p = 2^255 - 19` 的特殊形式。
-2. **[群](02-group-theory.md)** —— 群公理、有限群、循环群、Diffie-Hellman 协议与
+2. [群](02-group-theory.html) —— 群公理、有限群、循环群、Diffie-Hellman 协议与
    离散对数、CDH/DDH 假设。
-3. **[有限域](03-finite-fields.md)** —— 域公理、素数域 `Z_p`、费马小定理与乘法逆元、
+3. [有限域](03-finite-fields.html) —— 域公理、素数域 `Z_p`、费马小定理与乘法逆元、
    为什么扩展欧几里得算法不适合密码学。
-4. **[椭圆曲线群](04-elliptic-curves.md)** —— 直线与曲线的第三交点、群律的构造、
+4. [椭圆曲线群](04-elliptic-curves.html) —— 直线与曲线的第三交点、群律的构造、
    Montgomery 曲线、Curve25519 的参数、余因子与小子群攻击。
 
 ### 第二部分：有限域算术实现（对应论文第 3 章）
 
-5. **[数据表示](05-data-representation.md)** —— 字节数组与 16-limb 的 `field_elem`
+5. [数据表示](05-data-representation.html) —— 字节数组与 16-limb 的 `field_elem`
    表示、`unpack25519`/`pack25519`/`carry25519` 概览。
-6. **[加法和减法](06-addition-subtraction.md)** —— `fadd`/`fsub` 与"延迟归约"思想。
-7. **[乘法](07-multiplication.md)** —— 长乘法、模 `2p` 归约（神秘的 38）、溢出分析、
+6. [加法和减法](06-addition-subtraction.html) —— `fadd`/`fsub` 与"延迟归约"思想。
+7. [乘法](07-multiplication.html) —— 长乘法、模 `2p` 归约（神秘的 38）、溢出分析、
    为什么需要两次 `carry25519`。
-8. **[乘法逆元](08-multiplicative-inverse.md)** —— 费马小定理、平方-乘法、
+8. [乘法逆元](08-multiplicative-inverse.html) —— 费马小定理、平方-乘法、
    `finverse` 如何利用 `p - 2` 的二进制结构。
-9. **[打包与解包](09-pack-unpack.md)** —— `pack25519` 的常数时间模 `p` 归约、
+9. [打包与解包](09-pack-unpack.html) —— `pack25519` 的常数时间模 `p` 归约、
    `swap25519` 常数时间交换。
 
 ### 第三部分：椭圆曲线算术（对应论文第 4 章）
 
-10. **[Curve25519 曲线与安全参数](10-curve-equation.md)** —— Montgomery 曲线方程、
+10. [Curve25519 曲线与安全参数](10-curve-equation.html) —— Montgomery 曲线方程、
     群阶、基点、为什么选这些参数。
-11. **[点加法与射影坐标](11-point-addition.md)** —— 仿射坐标公式、射影坐标、
+11. [点加法与射影坐标](11-point-addition.html) —— 仿射坐标公式、射影坐标、
     只用 `x` 坐标的差分加法与点倍增公式推导。
-12. **[标量乘法与 Montgomery 阶梯](12-scalar-multiplication.md)** —— 阶梯算法、
+12. [标量乘法与 Montgomery 阶梯](12-scalar-multiplication.html) —— 阶梯算法、
     常数时间性、10 次乘法的优化分解（论文 §4.6 的 `v1`–`v18`）、无穷远点的自动处理。
 
 ### 第四部分：X25519 实现（对应论文 §4.7–4.8 与 RFC 7748）
 
-13. **[密钥生成](13-key-generation.md)** —— 随机数与钳位处理（三个比特各自的理由）。
-14. **[密钥交换](14-key-exchange.md)** —— Diffie-Hellman 协议、`x25519` 函数的完整
+13. [密钥生成](13-key-generation.html) —— 随机数与钳位处理（三个比特各自的理由）。
+14. [密钥交换](14-key-exchange.html) —— Diffie-Hellman 协议、`x25519` 函数的完整
     流程、RFC 7748 §6.1 测试向量。
-15. **[完整实现](15-complete-implementation.md)** —— 逐行讲解 `x25519.c`，
+15. [完整实现](15-complete-implementation.html) —— 逐行讲解 `x25519.c`，
     从 `unpack25519` 到 `pack25519` 的全流程串联。
-16. **[代码清单与测试](16-code-listings.md)** —— 全部源码、Makefile、编译运行、
+16. [代码清单与测试](16-code-listings.html) —— 全部源码、Makefile、编译运行、
     RFC 7748 §5.2 标量乘测试向量。
 
 ## 快速开始
@@ -85,21 +89,14 @@ gcc -O2 -Wall -Wextra -o rfc7748_check rfc7748_check.c x25519-tutorial/x25519.c
 
 预期输出：所有测试通过（`ALL PASS` 或逐项 `PASS`）。
 
-## 仓库结构
+## 构建本网站
 
-```
-x25519/
-├── curve25519.pdf          论文 PDF
-├── curve25519.md          论文转录文本（英文）
-├── curve25519-zh.md       论文转录文本（中文）
-├── rfc7748_check.c        RFC 7748 测试向量验证程序
-└── x25519-tutorial/
-    ├── README.md          本文件
-    ├── 01~16*.md          教程正文
-    ├── x25519.h           头文件
-    ├── x25519.c           完整实现（教程的最终成果）
-    ├── test.c             测试程序（RFC 7748 全部向量）
-    └── Makefile
+```bash
+cd x25519/website
+pnpm install        # 安装依赖（Node >= 20.19）
+pnpm run dev        # 开发预览（http://localhost:5173/）
+pnpm run verify     # typecheck + lint + test + build 全量验证
+pnpm run preview    # 本地预览构建产物（dist/）
 ```
 
 ## 参考文献

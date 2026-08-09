@@ -27,7 +27,7 @@ static void montgomery_ladder(field_elem x_out, field_elem z_out,
                               const u8 *k,
                               const field_elem x_in, const field_elem z_in);
 
-/* 随机数生成 */
+/* 随机数生成（第 13 章） */
 static void generate_random_bytes(u8 *buf, int len) {
     int fd = open("/dev/urandom", O_RDONLY);
     if (fd < 0) {
@@ -43,7 +43,7 @@ static void generate_random_bytes(u8 *buf, int len) {
     close(fd);
 }
 
-/* unpack25519: 字节数组 -> field_elem */
+/* unpack25519: 字节数组 -> field_elem（第 5 章） */
 static void unpack25519(field_elem out, const u8 *in) {
     int i;
     for (i = 0; i < 16; ++i) {
@@ -52,14 +52,14 @@ static void unpack25519(field_elem out, const u8 *in) {
     out[15] &= 0x7fff;
 }
 
-/* pack25519: field_elem -> 字节数组 */
+/* pack25519: field_elem -> 字节数组，含完整的模 p 归约（第 9 章） */
 static void pack25519(u8 *out, const field_elem in) {
     int i, j, carry;
     field_elem m, t;
-    
+
     for (i = 0; i < 16; ++i) t[i] = in[i];
     carry25519(t); carry25519(t); carry25519(t);
-    
+
     for (j = 0; j < 2; ++j) {
         m[0] = t[0] - 0xffed;
         for(i = 1; i < 15; i++) {
@@ -71,14 +71,14 @@ static void pack25519(u8 *out, const field_elem in) {
         m[14] &= 0xffff;
         swap25519(t, m, 1 - carry);
     }
-    
+
     for (i = 0; i < 16; ++i) {
         out[2*i] = t[i] & 0xff;
         out[2*i + 1] = t[i] >> 8;
     }
 }
 
-/* carry25519: 进位处理 */
+/* carry25519: 进位传播与 38 归约（第 5 章） */
 static void carry25519(field_elem elem) {
     int i;
     i64 carry;
@@ -90,60 +90,60 @@ static void carry25519(field_elem elem) {
     }
 }
 
-/* fadd: 有限域加法 */
+/* fadd: 有限域加法（第 6 章） */
 static void fadd(field_elem out, const field_elem a, const field_elem b) {
     int i;
     for (i = 0; i < 16; ++i) out[i] = a[i] + b[i];
 }
 
-/* fsub: 有限域减法 */
+/* fsub: 有限域减法（第 6 章） */
 static void fsub(field_elem out, const field_elem a, const field_elem b) {
     int i;
     for (i = 0; i < 16; ++i) out[i] = a[i] - b[i];
 }
 
-/* fmul: 有限域乘法 */
+/* fmul: 有限域乘法（第 7 章） */
 static void fmul(field_elem out, const field_elem a, const field_elem b) {
     i64 i, j, product[31];
-    
+
     for (i = 0; i < 31; ++i) product[i] = 0;
-    
+
     for (i = 0; i < 16; ++i) {
         for (j = 0; j < 16; ++j) {
             product[i+j] += a[i] * b[j];
         }
     }
-    
+
     for (i = 0; i < 15; ++i) {
         product[i] += 38 * product[i + 16];
     }
-    
+
     for (i = 0; i < 16; ++i) {
         out[i] = product[i];
     }
-    
+
     carry25519(out);
     carry25519(out);
 }
 
-/* finverse: 乘法逆元 */
+/* finverse: 乘法逆元，a^{-1} = a^{p-2}（第 8 章） */
 static void finverse(field_elem out, const field_elem in) {
     field_elem c;
     int i;
-    
+
     for (i = 0; i < 16; ++i) c[i] = in[i];
-    
+
     for (i = 253; i >= 0; i--) {
         fmul(c, c, c);
         if (i != 2 && i != 4) {
             fmul(c, c, in);
         }
     }
-    
+
     for (i = 0; i < 16; ++i) out[i] = c[i];
 }
 
-/* swap25519: 常数时间交换 */
+/* swap25519: 常数时间条件交换（第 9 章） */
 static void swap25519(field_elem p, field_elem q, int bit) {
     i64 t, i, c = ~(bit - 1);
     for (i = 0; i < 16; ++i) {
@@ -153,14 +153,14 @@ static void swap25519(field_elem p, field_elem q, int bit) {
     }
 }
 
-/* clamp: 钳位处理 */
+/* clamp: 钳位处理（第 13 章） */
 static void clamp(u8 *k) {
     k[0] &= 248;
     k[31] &= 127;
     k[31] |= 64;
 }
 
-/* montgomery_ladder: Montgomery 阶梯算法 */
+/* montgomery_ladder: Montgomery 阶梯（第 12 章） */
 static void montgomery_ladder(field_elem x_out, field_elem z_out,
                               const u8 *k,
                               const field_elem x_in, const field_elem z_in) {
@@ -168,108 +168,90 @@ static void montgomery_ladder(field_elem x_out, field_elem z_out,
     field_elem t1, t2, t3, t4, t5, t6, t7, t8;
     field_elem a24_fe;
     int i;
-    
-    // (A+2)/4 = (486662+2)/4 = 121666
+
+    /* (A+2)/4 = (486662+2)/4 = 121666（第 12.6 节） */
     a24_fe[0] = 121666;
     for (i = 1; i < 16; i++) a24_fe[i] = 0;
-    
-    // 初始化 R0 = O (无穷远点，用 (1:0) 表示)
+
+    /* 初始化 R0 = O（射影表示 (1:0)），R1 = P = (x_in : z_in) */
     x0[0] = 1; z0[0] = 0;
     for (i = 1; i < 16; i++) {
         x0[i] = 0; z0[i] = 0;
     }
-    
-    // 初始化 R1 = P
     for (i = 0; i < 16; i++) {
         x1[i] = x_in[i]; z1[i] = z_in[i];
     }
-    
-    // 处理 k 的每一位（从第 254 位到第 0 位）
+
+    /* 处理 k 的每一位（bit 254 .. bit 0，共 255 轮） */
     for (i = 254; i >= 0; i--) {
-        // 获取当前位（小端序字节数组）
+        /* 第 i 位（小端字节数组） */
         int bit = (k[i / 8] >> (i % 8)) & 1;
-        
-        // 根据当前位交换 R0 和 R1
+
+        /* 根据 bit 常数时间地交换（低幂点, 高幂点） */
         swap25519(x0, x1, bit);
         swap25519(z0, z1, bit);
-        
-        // 差分加法: R1 = R0 + R1, 使用 R0 - R1 = P (已知)
-        // t1 = x0 + z0
+
+        /* ---- 差分加法：x1/z1 = X_{2i+1}/Z_{2i+1}（含因子 4，见第 12.5 节） ---- */
+        fadd(t1, x0, z0);        /* t1 = x0 + z0        (v1) */
+        fsub(t2, x0, z0);        /* t2 = x0 - z0        (v2) */
+        fadd(t3, x1, z1);        /* t3 = x1 + z1        (v3) */
+        fsub(t4, x1, z1);        /* t4 = x1 - z1        (v4) */
+        fmul(t5, t1, t4);        /* t5 = (x0+z0)(x1-z1) (v8) */
+        fmul(t6, t2, t3);        /* t6 = (x0-z0)(x1+z1) (v7) */
+        fadd(t7, t5, t6);        /* t7 = 2(x0x1 - z0z1) (v9) */
+        fsub(t8, t5, t6);        /* t8 = -2(x0z1 - x1z0)（平方后符号无影响） */
+        fmul(x1, t7, t7);        /* x1 = t7^2 = 4 X_{2i+1}        (v18) */
+        fmul(t8, t8, t8);        /* t8 = t8^2 = 4 (x0z1-x1z0)^2   (v11) */
+        fmul(z1, x_in, t8);      /* z1 = x_in * t8 = 4 Z_{2i+1}   (v17) */
+
+        /* ---- 倍增：x0/z0 = X_{2i}/Z_{2i} ---- */
         fadd(t1, x0, z0);
-        // t2 = x0 - z0
+        fmul(t1, t1, t1);        /* t1 = (x0+z0)^2               (v5) */
         fsub(t2, x0, z0);
-        // t3 = x1 + z1
-        fadd(t3, x1, z1);
-        // t4 = x1 - z1
-        fsub(t4, x1, z1);
-        // t5 = t1 * t4
-        fmul(t5, t1, t4);
-        // t6 = t2 * t3
-        fmul(t6, t2, t3);
-        // t7 = t5 + t6
-        fadd(t7, t5, t6);
-        // t8 = t5 - t6
-        fsub(t8, t5, t6);
-        // x1 = Z_diff * (e+d)^2 = 1 * (e+d)^2
-        fmul(x1, t7, t7);
-        // z1 = X_diff * (e-d)^2 = x_in * (e-d)^2
-        fmul(t8, t8, t8);
-        fmul(z1, x_in, t8);
-        
-        // 倍增: R0 = 2 * R0
-        // t1 = (x0 + z0)^2
-        fadd(t1, x0, z0);
-        fmul(t1, t1, t1);
-        // t2 = (x0 - z0)^2
-        fsub(t2, x0, z0);
-        fmul(t2, t2, t2);
-        // x0 = t1 * t2
-        fmul(x0, t1, t2);
-        // t3 = t1 - t2
-        fsub(t3, t1, t2);
-        // t4 = ((A+2)/4) * t3
-        fmul(t4, a24_fe, t3);
-        // z0 = t3 * (t2 + t4)
-        fadd(t5, t2, t4);
-        fmul(z0, t3, t5);
-        
-        // 再次交换（恢复顺序）
+        fmul(t2, t2, t2);        /* t2 = (x0-z0)^2               (v6) */
+        fmul(x0, t1, t2);        /* x0 = (x0^2 - z0^2)^2 = X_{2i} (v16) */
+        fsub(t3, t1, t2);        /* t3 = t1 - t2 = 4 x0 z0       (v12) */
+        fmul(t4, a24_fe, t3);    /* t4 = 121666 * 4x0z0 = (A+2)x0z0 */
+        fadd(t5, t2, t4);        /* t5 = (x0-z0)^2 + (A+2)x0z0 = x0^2+Ax0z0+z0^2 */
+        fmul(z0, t3, t5);        /* z0 = 4x0z0(...) = Z_{2i}     (v15) */
+
+        /* 交换回来，恢复 (x0,z0) 低幂、(x1,z1) 高幂的顺序 */
         swap25519(x0, x1, bit);
         swap25519(z0, z1, bit);
     }
-    
-    // 输出 R0
+
+    /* 输出 R0 */
     for (i = 0; i < 16; i++) {
         x_out[i] = x0[i]; z_out[i] = z0[i];
     }
 }
 
-/* x25519: X25519 密钥交换 */
+/* x25519: X25519 密钥交换（第 14 章） */
 void x25519(u8 *out, const u8 *sk, const u8 *pk) {
     u8 clamped_sk[32];
     field_elem x, z, x_out, z_out, inv_z, result;
-    
-    // 1. 钳位处理私钥
+
+    /* 1. 钳位处理私钥 */
     memcpy(clamped_sk, sk, 32);
     clamp(clamped_sk);
-    
-    // 2. 解包公钥
+
+    /* 2. 解包公钥（u 坐标），z 初始化为 1（仿射） */
     unpack25519(x, pk);
     z[0] = 1;
     for (int i = 1; i < 16; i++) z[i] = 0;
-    
-    // 3. 使用 Montgomery 阶梯计算标量乘法
+
+    /* 3. Montgomery 阶梯 */
     montgomery_ladder(x_out, z_out, clamped_sk, x, z);
-    
-    // 4. 计算仿射坐标: x = x_out / z_out
+
+    /* 4. 射影 -> 仿射：x = x_out / z_out（唯一一次除法） */
     finverse(inv_z, z_out);
     fmul(result, x_out, inv_z);
-    
-    // 5. 打包结果
+
+    /* 5. 打包（含完整模 p 归约） */
     pack25519(out, result);
 }
 
-/* generate_keypair: 生成密钥对 */
+/* generate_keypair: 生成密钥对（第 13 章） */
 void generate_keypair(u8 *pk, u8 *sk) {
     generate_random_bytes(sk, 32);
     clamp(sk);

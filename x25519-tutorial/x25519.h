@@ -10,10 +10,10 @@ typedef unsigned char u8;
 typedef long long i64;
 typedef i64 field_elem[16];
 
-/* 生成密钥对 */
+/* 生成密钥对：pk = 公钥，sk = 私钥 */
 void generate_keypair(u8 *pk, u8 *sk);
 
-/* X25519 密钥交换 */
+/* X25519 密钥交换：out = X25519(sk, pk) */
 void x25519(u8 *out, const u8 *sk, const u8 *pk);
 
 #endif /* X25519_H */

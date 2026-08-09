@@ -1,0 +1,8 @@
+# storeDir：把 pnpm store 固定在项目内 .pnpm-store（已在 .gitignore），
+# 适配 HOME 只读的容器环境；普通环境同样生效（store 位于项目内）。
+storeDir: .pnpm-store
+
+# pnpm 11 默认阻止依赖的 build scripts，这里显式放行 esbuild 的
+# postinstall（下载/校验平台二进制）。vite 8 依赖树中无 esbuild 时此配置被忽略。
+allowBuilds:
+  esbuild: true

@@ -1,0 +1,5 @@
+# 编译产物（make 生成的可执行文件）
+x25519-tutorial/test
+
+# 网站项目内的大目录由 website/.gitignore 单独排除
+# （node_modules/ dist/ .ssg/ .pnpm-store/），这里不重复列出
