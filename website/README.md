@@ -186,6 +186,12 @@ git subtree push --prefix dist origin gh-pages
    hljs 主题**，代码块实际显示为无颜色区分的纯文本。本站在 `style.css`
    末尾补全了 GitHub 浅色主题的 token 颜色规则（限定 `.markdown-body`
    作用域、背景沿用模板变量），C/Python/Makefile 等代码块恢复彩色高亮。
+6. **部署 base 路径**（`vite.config.ts` + `src/ssg/site.ts`）：模板的产物
+   全部使用站点根绝对路径（`/assets/...`），部署到 GitHub Pages 项目站点
+   `<user>.github.io/<repo>/` 时所有资源会 404。本站在 `SiteConfig` 增加
+   `base`（当前 `'/x25519/'`，必须与仓库名一致），构建期把 base 前缀注入
+   assets、`data-mathjax-src`、MathJax `fontPath`/`paths.fonts`；dev 模式
+   仍用 `/` 保证开发体验不变。自定义域名/域根部署时把 `base` 改为 `'/'`。
 
 ## 测试
 

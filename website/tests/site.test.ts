@@ -119,6 +119,17 @@ describe('主流程（真实 content/）', () => {
     expect(html).toContain("fontPath: '/mathjax-newcm-font'");
   });
 
+  it('部署 base 前缀：字体与 MathJax 脚本路径带上 base（子路径部署）', () => {
+    // 默认 base='/' 的行为（主流程已断言），此处验证 base='/x25519/' 的前缀注入
+    const baseDir = join(tmpRoot, 'out-base');
+    const site2 = generateSite({ ...config, outputDir: baseDir }, '/x25519/');
+    expect(site2.errors).toEqual([]);
+    const html = readFileSync(join(baseDir, '01-modular-arithmetic.html'), 'utf8');
+    expect(html).toContain("fontPath: '/x25519/mathjax-newcm-font'");
+    expect(html).toContain("paths: { fonts: '/x25519/mathjax-newcm-font' }");
+    expect(html).toMatch(/data-mathjax-src="\/x25519\/tex-mml-chtml-[0-9a-f]{8}\.js"/);
+  });
+
   it('index.html 重定向到第一页（首页）', () => {
     expect(readOut('index.html')).toContain('http-equiv="refresh"');
     expect(readOut('index.html')).toContain('url=00-introduction.html');

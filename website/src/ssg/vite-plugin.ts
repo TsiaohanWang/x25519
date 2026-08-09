@@ -14,9 +14,11 @@ import { generateSite, type SiteConfig } from './site.ts';
 
 export function ssgPlugin(config: SiteConfig): Plugin {
   const contentDirAbs = join(process.cwd(), config.contentDir);
+  // 部署 base：build 用 config.base（如 '/x25519/'），dev 用 '/'（dev 路由中间件不处理前缀）
+  let siteBase = '/';
 
   const regenerate = (): void => {
-    const site = generateSite(config);
+    const site = generateSite(config, siteBase);
     if (site.errors.length > 0) {
       throw new Error(`SSG 校验失败:\n${site.errors.map((e) => `  - ${e}`).join('\n')}`);
     }
@@ -24,8 +26,9 @@ export function ssgPlugin(config: SiteConfig): Plugin {
 
   return {
     name: 'minimal-spec-ssg',
-    config(userConfig) {
-      const site = generateSite(config);
+    config(userConfig, env) {
+      siteBase = env.mode === 'production' ? (config.base ?? '/') : '/';
+      const site = generateSite(config, siteBase);
       if (site.errors.length > 0) {
         throw new Error(`SSG 校验失败:\n${site.errors.map((e) => `  - ${e}`).join('\n')}`);
       }

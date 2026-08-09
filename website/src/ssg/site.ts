@@ -35,6 +35,12 @@ export interface SiteConfig {
   contentDir: string;
   /** 生成目录（相对项目根，含页面 HTML 与 public 资产） */
   outputDir: string;
+  /**
+   * 站点部署的 URL 前缀（必须以 / 开头、/ 结尾），如 GitHub Pages 项目站点
+   * '/x25519/'；域根部署或自定义域名设为 '/'（默认）。
+   * 构建产物中的绝对资源路径（assets、MathJax 字体等）都会带上此前缀。
+   */
+  base?: string;
 }
 
 export interface Heading {
@@ -70,7 +76,7 @@ export interface GeneratedSite {
 
 const SLUG_RE = /^[a-zA-Z0-9_-]+$/;
 
-export function generateSite(config: SiteConfig): GeneratedSite {
+export function generateSite(config: SiteConfig, base = '/'): GeneratedSite {
   const errors: string[] = [];
   const renderer = createMarkdownRenderer();
   // resolve 而非 join：contentDir/outputDir 允许传入绝对路径（测试等场景）
@@ -132,7 +138,7 @@ export function generateSite(config: SiteConfig): GeneratedSite {
   }
 
   // 复制 MathJax 入口到 public 目录（带内容 hash，URL 稳定且可缓存）
-  const mathjaxUrl = copyMathJax(outputDir);
+  const mathjaxUrl = copyMathJax(outputDir, base);
   // 复制 MathJax 默认字体（mathjax-newcm）到本地，公式字形不依赖 CDN
   copyMathJaxFonts(outputDir);
   // 合并 content 同级 public/ 静态资产（图片等）到生成目录的 public/ 下
@@ -141,7 +147,7 @@ export function generateSite(config: SiteConfig): GeneratedSite {
   const input: Record<string, string> = {};
   const year = new Date().getFullYear();
   for (const page of pages) {
-    const html = renderPageTemplate(config, page, pages, mathjaxUrl, year);
+    const html = renderPageTemplate(config, page, pages, mathjaxUrl, year, base);
     const out = join(outputDir, page.file);
     writeFileSync(out, html);
     input[page.slug] = out;
@@ -261,8 +267,11 @@ function renderPageTemplate(
   pages: Page[],
   mathjaxUrl: string,
   year: number,
+  base = '/',
 ): string {
   const title = `${page.title} — ${config.siteName} v${config.siteVersion}`;
+  // 字体目录 URL：base 以 / 结尾，直接拼接（如 '/x25519/' + 'mathjax-newcm-font'）
+  const fontUrl = `${base}mathjax-newcm-font`;
   return `<!DOCTYPE html>
 <html lang="zh-CN">
   <head>
@@ -281,13 +290,14 @@ function renderPageTemplate(
           skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
         },
         // 公式字形完全本地化（构建期复制 @mathjax/mathjax-newcm-font 到站点根），
-        // 不依赖 jsdelivr CDN；见 src/ssg/site.ts 的 copyMathJaxFonts
+        // 不依赖 jsdelivr CDN；见 src/ssg/site.ts 的 copyMathJaxFonts。
+        // fontUrl 带部署 base 前缀（GitHub Pages 项目站点子路径）
         loader: {
-          paths: { fonts: '/mathjax-newcm-font' },
+          paths: { fonts: '${fontUrl}' },
         },
         output: {
           font: 'mathjax-newcm',
-          fontPath: '/mathjax-newcm-font',
+          fontPath: '${fontUrl}',
         },
       };
     </script>
@@ -382,8 +392,8 @@ function renderNestedList(headings: Heading[], file: string): string {
 /* 工具                                                                 */
 /* ------------------------------------------------------------------ */
 
-/** 复制 mathjax 入口到 public 目录（带 sha1 前缀），返回浏览器可用的 URL */
-function copyMathJax(outputDir: string): string {
+/** 复制 mathjax 入口到 public 目录（带 sha1 前缀），返回浏览器可用的 URL（含 base 前缀） */
+function copyMathJax(outputDir: string, base = '/'): string {
   const src = require.resolve('mathjax/tex-mml-chtml.js');
   const content = readFileSync(src);
   const hash = createHash('sha1').update(content).digest('hex').slice(0, 8);
@@ -400,7 +410,7 @@ function copyMathJax(outputDir: string): string {
   if (existsSync(sreDir) && !existsSync(join(publicDir, 'sre'))) {
     cpSync(sreDir, join(publicDir, 'sre'), { recursive: true });
   }
-  return `/tex-mml-chtml-${hash}.js`;
+  return `${base}tex-mml-chtml-${hash}.js`;
 }
 
 /**
