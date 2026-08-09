@@ -40,8 +40,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: pnpm
-          cache-dependency-path: website/pnpm-lock.yaml
+          # 注意：不启用 setup-node 的 pnpm cache —— 本项目的
+          # pnpm-workspace.yaml 把 storeDir 固定在项目内 .pnpm-store，
+          # setup-node 在 workspace 根探测 store 路径会报
+          # "Path Validation Error: Path(s) ... do(es) not exist"。
+          # pnpm 自身的 ~/.cache/pnpm 缓存仍然生效。
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
