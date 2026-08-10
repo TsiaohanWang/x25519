@@ -76,6 +76,7 @@ describe('主流程（真实 content/）', () => {
     '14-key-exchange',
     '15-complete-implementation',
     '16-code-listings',
+    '17-constant-time',
   ];
 
   it('生成全部页面且无校验错误（内容自身无死链接/死锚点）', () => {
