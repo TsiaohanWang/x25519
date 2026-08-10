@@ -309,7 +309,7 @@ Bob   公钥  de9edb7d7b7dc1b4d35b61c2ece435373f8343c85b78674dadfc7e146f882b4f
 
 ## 16.8 常见问题（FAQ）
 
-**Q：教程里的 "a0a1…bf → e6db…" 测试向量去哪了？**
+**Q：教程里的 “a0a1…bf → e6db…” 测试向量去哪了？**
 A：那组数据不在 RFC 7748 中（`e6db…` 是 §5.2 向量 1 的 u 坐标输入，`c3da…` 是它的输出，被旧版误当成 Alice/Bob 的密钥对）。本版全部改用 RFC 7748 的真实向量，并据此修正了 `test.c` 与 `rfc7748_check.c`。
 
 **Q：为什么 `montgomery_ladder` 里取位是 `k[i/8]` 而不是 `k[i/64]`？**
