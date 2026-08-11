@@ -75,7 +75,7 @@ function fixDisplayMath(md: string): string {
 
 const tutorialLoader: Loader = {
   name: 'x25519-tutorial-loader',
-  async load({ store, parseData, generateDigest, logger }) {
+  async load({ store, parseData, generateDigest, renderMarkdown, logger }) {
     const files = readdirSync(SRC).filter((f) => f.endsWith('.md')).sort();
     for (const file of files) {
       const raw = readFileSync(join(SRC, file), 'utf-8');
@@ -99,10 +99,11 @@ const tutorialLoader: Loader = {
         data: { title, description, sidebar: { order } },
         filePath: join(SRC, file),
       });
+      const rendered = await renderMarkdown(body);
       store.set({
         id,
         data,
-        body,
+        rendered,
         digest: generateDigest({ id, body, title, description, order }),
       });
     }
