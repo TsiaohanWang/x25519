@@ -21,9 +21,11 @@ pnpm preview        # 预览构建产物
 pnpm check          # 类型检查（astro check）
 ```
 
-- **内容单一来源**：`../x25519-tutorial/*.md`。`scripts/sync-content.mjs`
-  在构建前将其同步到 `src/content/docs/`（注入 frontmatter、修正 display 公式
-  格式、改写简介内部链接），**不要直接编辑 `src/content/docs/`**。
+- **内容单一来源**：`../x25519-tutorial/*.md`。`src/content.config.ts` 中的
+  自定义 loader 在构建/开发时**直接读取**该目录并注入 frontmatter（title 取自
+  H1、description 取自首段、sidebar order 按章节号），同时修正 display 公式
+  格式、改写简介内部链接——**不生成任何中间副本**，`src/content/docs/` 已不存在。
+  内容只维护在 `x25519-tutorial/` 一处。
 - **数学公式**：KaTeX（`remark-math` + `rehype-katex`）。
 - **代码高亮**：Starlight 内置 expressive-code（c/bash/makefile 等语言）。
 - **搜索**：Starlight 内置 Pagefind。

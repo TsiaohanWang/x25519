@@ -2,9 +2,6 @@
 dist/
 .astro/
 
-# 内容同步产物（由 scripts/sync-content.mjs 生成，单一来源在 ../x25519-tutorial/）
-src/content/docs/
-
 # 依赖与临时文件
 node_modules/
 .pnpm-store/

@@ -6,11 +6,10 @@
   "private": true,
   "packageManager": "pnpm@11.20.0",
   "scripts": {
-    "sync": "node scripts/sync-content.mjs",
-    "dev": "pnpm sync && astro dev",
-    "build": "pnpm sync && astro build",
+    "dev": "astro dev",
+    "build": "astro build",
     "preview": "astro preview",
-    "check": "pnpm sync && astro check"
+    "check": "astro check"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.4",
