@@ -94,9 +94,10 @@ const tutorialLoader: Loader = {
       body = fixDisplayMath(body);
       const description = extractDescription(body);
       const order = file === 'README.md' ? 0 : chapterOrder(file);
+      const editUrl = `https://github.com/TsiaohanWang/x25519/edit/master/x25519-tutorial/${file}`;
       const data = await parseData({
         id,
-        data: { title, description, sidebar: { order } },
+        data: { title, description, sidebar: { order }, editUrl },
         filePath: join(SRC, file),
       });
       const rendered = await renderMarkdown(body);
