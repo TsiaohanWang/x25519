@@ -1,11 +1,20 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="X25519 椭圆曲线">
-  <!-- 椭圆曲线 y² = x³ + Ax² + x 的主分支（Montgomery 形式，右侧开口） -->
-  <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round">
-    <path d="M15 32 C 24 27, 33 24, 41 24 C 49 24, 54 18, 57 9"/>
-    <path d="M15 32 C 24 37, 33 40, 41 40 C 49 40, 54 46, 57 55"/>
-  </g>
-  <!-- 过基点的切线：点加倍 / 标量乘法的意象 -->
-  <path d="M28 40 L 58 7" fill="none" stroke="currentColor" stroke-width="3" stroke-dasharray="4 4" stroke-linecap="round"/>
-  <!-- 基点（曲线上的一点，示意 x = 9 附近的生成元） -->
-  <circle cx="44" cy="21" r="5" fill="currentColor"/>
+  <defs>
+    <linearGradient id="x25519-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#7c5cff"/>
+      <stop offset="1" stop-color="#3f8dff"/>
+    </linearGradient>
+  </defs>
+  <!-- 几何徽章背景（圆角方形，紫蓝渐变） -->
+  <rect x="2" y="2" width="60" height="60" rx="15" fill="url(#x25519-bg)"/>
+  <!-- 椭圆曲线 y² = x³ + Ax² + x 的主分支（两支在左侧原点汇合） -->
+  <path d="M14 32 C 22 27, 30 24, 38 24 C 46 24, 52 19, 57 10"
+        fill="none" stroke="#ffffff" stroke-width="3.2" stroke-linecap="round"/>
+  <path d="M14 32 C 22 37, 30 40, 38 40 C 46 40, 52 45, 57 54"
+        fill="none" stroke="#ffffff" stroke-width="3.2" stroke-linecap="round"/>
+  <!-- 过基点的切线（点加倍意象，半透明白色虚线） -->
+  <path d="M32 39 L 57 7" fill="none" stroke="rgba(255,255,255,0.55)"
+        stroke-width="2" stroke-dasharray="3.5 3" stroke-linecap="round"/>
+  <!-- 基点（曲线上的一点） -->
+  <circle cx="46" cy="21" r="4.6" fill="#ffd166" stroke="#ffffff" stroke-width="1.6"/>
 </svg>
