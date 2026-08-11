@@ -23,6 +23,26 @@
   overflow-x: auto;
 }
 
+/* 正文链接：深青 teal + 下划线（替换 Starlight 默认蓝紫色） */
+.sl-markdown-content a {
+  color: var(--sl-color-teal, #2dd4bf); /* 默认（深色主题）用亮 teal */
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  transition: color 0.15s ease;
+}
+.sl-markdown-content a:hover {
+  color: #5eead4; /* teal-300，深色主题下 hover 提亮 */
+  text-decoration-thickness: 2px;
+}
+/* 浅色主题：用深 teal，hover 加深 */
+[data-theme='light'] .sl-markdown-content a {
+  color: #0d9488; /* teal-600 */
+}
+[data-theme='light'] .sl-markdown-content a:hover {
+  color: #0f766e; /* teal-700 */
+}
+
 /* 教程强调的"对应论文"引用块保持 Starlight 默认即可；微调代码块圆角 */
 .markdown-body pre,
 .prose pre {

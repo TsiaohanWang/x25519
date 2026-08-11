@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="X25519 椭圆曲线">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="X25519 椭圆曲线密码学">
   <defs>
     <linearGradient id="x25519-bg" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#7c5cff"/>
@@ -7,14 +7,11 @@
   </defs>
   <!-- 几何徽章背景（圆角方形，紫蓝渐变） -->
   <rect x="2" y="2" width="60" height="60" rx="15" fill="url(#x25519-bg)"/>
-  <!-- 椭圆曲线 y² = x³ + Ax² + x 的主分支（两支在左侧原点汇合） -->
-  <path d="M14 32 C 22 27, 30 24, 38 24 C 46 24, 52 19, 57 10"
-        fill="none" stroke="#ffffff" stroke-width="3.2" stroke-linecap="round"/>
-  <path d="M14 32 C 22 37, 30 40, 38 40 C 46 40, 52 45, 57 54"
-        fill="none" stroke="#ffffff" stroke-width="3.2" stroke-linecap="round"/>
-  <!-- 过基点的切线（点加倍意象，半透明白色虚线） -->
-  <path d="M32 39 L 57 7" fill="none" stroke="rgba(255,255,255,0.55)"
-        stroke-width="2" stroke-dasharray="3.5 3" stroke-linecap="round"/>
-  <!-- 基点（曲线上的一点） -->
-  <circle cx="46" cy="21" r="4.6" fill="#ffd166" stroke="#ffffff" stroke-width="1.6"/>
+  <!-- Lucide "chart-spline"：平滑曲线 + 坐标轴（椭圆曲线意象，白色线性风格） -->
+  <g transform="translate(12 12) scale(1.6667)"
+     fill="none" stroke="#ffffff" stroke-width="2.2"
+     stroke-linecap="round" stroke-linejoin="round">
+    <path d="M3 3v16a2 2 0 0 0 2 2h16"/>
+    <path d="M7 16c.5-2 1.5-7 4-7 2 0 2 3 4 3 2.5 0 4.5-5 5-7"/>
+  </g>
 </svg>
