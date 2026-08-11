@@ -65,12 +65,17 @@ function fixIntroLinks(md) {
  * 这里统一改写为 fenced 三行块（数学内容不变）。
  */
 function fixDisplayMath(md) {
-  // 1. 单行 $$content$$（注意：替换串中的 $$ 会被 JS 解释为字面 $，必须用函数替换）
-  md = md.replace(/^\$\$(.+)\$\$$/gm, (_, c) => `$$\n${c}\n$$`);
-  // 2. 多行块：首行“$$内容”，中间若干行，末行“内容$$”
+  // 1. 单行 $$content$$（允许行首缩进；替换串中的 $$ 会被 JS 解释为字面 $，必须用函数替换）
+  //    内容行必须继承 fence 的缩进：若 $$ 块在列表项内（有缩进），内容行脱离缩进
+  //    会被 markdown 判为列表项外，导致 math flow 未闭合而吞掉后续正文。
+  md = md.replace(/^(\s*)\$\$(.+)\$\$\s*$/gm, (_, pre, c) => `${pre}$$\n${pre}${c}\n${pre}$$`);
+  // 2. 多行块：首行“$$内容”，中间若干行，末行“内容$$”（各行继承 fence 缩进）
   md = md.replace(
     /^(\s*)\$\$([^\n$][^\n]*)\n((?:[^\n]*\n)*?)([^\n]*?)\$\$\s*$/gm,
-    (_, pre, first, mid, last) => `${pre}$$\n${first}\n${mid}${last}\n$$`,
+    (_, pre, first, mid, last) => {
+      const midFixed = mid ? mid.split('\n').map((l) => pre + l).join('\n') : '';
+      return `${pre}$$\n${pre}${first}\n${midFixed}${pre}${last}\n${pre}$$`;
+    },
   );
   return md;
 }
