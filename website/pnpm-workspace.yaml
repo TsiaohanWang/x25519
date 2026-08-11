@@ -1,7 +1,8 @@
 # pnpm store 固定在项目内，避免写入 HOME（对 CI/容器环境友好）
 storeDir: .pnpm-store
 
-# 允许 esbuild（Vite 依赖）与 sharp（Astro 图片优化）执行构建脚本
-onlyBuiltDependencies:
-  - esbuild
-  - sharp
+# 允许 esbuild（Vite 依赖）与 sharp（Astro 图片优化）执行构建脚本。
+# 由 `pnpm approve-builds --all` 生成（pnpm 11 的新格式）。
+allowBuilds:
+  esbuild: true
+  sharp: true
