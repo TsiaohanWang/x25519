@@ -1,7 +1,11 @@
-# 依赖与构建产物
-node_modules/
+# 构建产物
 dist/
-.ssg/
+.astro/
 
-# pnpm store 固定在项目内（适配 HOME 只读环境）
+# 内容同步产物（由 scripts/sync-content.mjs 生成，单一来源在 ../x25519-tutorial/）
+src/content/docs/
+
+# 依赖与临时文件
+node_modules/
 .pnpm-store/
+.DS_Store
